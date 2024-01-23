@@ -73,6 +73,8 @@ PS.init = function( system, options ) {
 	// change the string parameter as needed.
 
 	PS.statusText( "Click the red square!" );
+	
+	PS.color( PS.random(7), PS.random(7), PS.COLOR_RED );
 
 	// Add any other initialization code you need here.
 };
@@ -91,10 +93,16 @@ PS.touch = function( x, y, data, options ) {
 	// Uncomment the following code line
 	// to inspect x/y parameters:
 
-	// PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
+	//PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
 
 	// Add code here for mouse clicks/touches
 	// over a bead.
+	
+	if ( PS.color( x, y ) == PS.COLOR_RED ) {
+		PS.color( x, y, PS.COLOR_WHITE );
+		PS.color( PS.random(7), PS.random(7), PS.COLOR_RED );
+	}
+	
 };
 
 /*
