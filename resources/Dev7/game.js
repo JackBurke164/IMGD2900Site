@@ -54,35 +54,34 @@ Any value returned is ignored.
 // It is initialized with an immediately-invoked
 // function call (described below)
 
-var G = ( function () {
+let G = ( function () {
 	// By convention, constants are all upper-case
 
-	var WIDTH = 9; // width of grid
-	var HEIGHT = 9; // height of grid
+	let WIDTH = 9; // width of grid
+	let HEIGHT = 9; // height of grid
 
-	var COLOR_PLAYER = PS.COLOR_GREEN; // grabber color
-	var COLOR_ENEMY = PS.COLOR_BLACK; // floor color
-	var COLOR_BORDER = PS.COLOR_GRAY; // wall color
+	let COLOR_PLAYER = PS.COLOR_GREEN; // player color
+	let COLOR_ENEMY = PS.COLOR_BLACK; // enemy color
+	let COLOR_BORDER = PS.COLOR_GRAY; // border color
+	let COLOR_FLOOR = PS.COLOR_WHITE; // floor color
 
 	// The following variables are player-related,
 	// so they start with 'p'
 
-	var p_x = 1; // current x-pos of grabber
-	var p_y = 4; // current y-pos of grabber
+	let p_x = 1; // current x-pos of player
+	let p_y = 4; // current y-pos of player
 	
 	// The following variables are enemy-related,
 	// so they start with 'e'
 
-	var e_x = 7; // current x-pos of grabber
-	var e_y = 4; // current y-pos of grabber
+	let e_x = 7; // current x-pos of enemy
+	let e_y = 4; // current y-pos of enemy
 
 	// The 'exports' object is used to define
 	// variables and/or functions that need to be
 	// accessible outside this function.
-	// So far, it contains only one property,
-	// an 'init' function with no parameters.
-
-	var exports = {
+	
+	let exports = {
 
 		// G.init()
 		// Initializes the game
@@ -90,7 +89,7 @@ var G = ( function () {
 		init : function () {
 			PS.gridSize( WIDTH, HEIGHT ); // init grid
 			for(let i = 0; i < 9; i++) {
-				PS.color(4, i, PS.COLOR_GRAY);
+				PS.color(4, i, COLOR_BORDER);
 			}
 
 
@@ -100,6 +99,25 @@ var G = ( function () {
 			PS.color( e_x, e_y, COLOR_ENEMY );
 			
 			PS.statusText( "Press Space to throw a dodgeball!" );
+		}
+		
+		move : function(h,v) {
+			
+			let nx = p_x + h;
+			let ny = p_y + v;
+			
+			if(PS.color(nx, ny) == COLOR_BORDER) {
+				return;
+			}
+			
+			if ( ( nx < 0 ) || ( nx >= WIDTH ) || ( ny < 0 ) || ( ny >= HEIGHT ) ) {
+				return;
+			}
+			
+			PS.color(p_x, p_y, COLOR_FLOOR);
+			PS.color(nx, ny, COLOR_PLAYER);
+			p_x = nx;
+			p_y = ny;
 		}
 	};
 
@@ -115,6 +133,8 @@ var G = ( function () {
 // to initialize the game
 
 PS.init = G.init;
+
+
 
 
 
@@ -228,25 +248,28 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 		case 119:
 		case 87: {
 			// Code to move things UP
+			G.move(0, -1);
 			break;
 		}
 		case PS.KEY_ARROW_DOWN:
 		case 115:
 		case 83: {
 			// Code to move things DOWN
+			G.move(0,1);
 			break;
 		}
 		case PS.KEY_ARROW_LEFT:
 		case 97:
 		case 65: {
 			// Code to move things LEFT
+			G.move(-1,0);
 			break;
 		}
 		case PS.KEY_ARROW_RIGHT:
 		case 100:
 		case 68: {
 			// Code to move things RIGHT
-			G.move(
+			G.move(1,0);
 			break;
 		}
 	}
