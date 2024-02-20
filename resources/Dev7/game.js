@@ -48,34 +48,75 @@ Any value returned is ignored.
 [options : Object] = A JavaScript object with optional data properties; see API documentation for details.
 */
 
-PS.init = function( system, options ) {
-	// Uncomment the following code line
-	// to verify operation:
+// The global G variable creates a namespace
+// for game-specific code and variables
 
-	// PS.debug( "PS.init() called\n" );
+// It is initialized with an immediately-invoked
+// function call (described below)
 
-	// This function should normally begin
-	// with a call to PS.gridSize( x, y )
-	// where x and y are the desired initial
-	// dimensions of the grid.
-	// Call PS.gridSize() FIRST to avoid problems!
-	// The sample call below sets the grid to the
-	// default dimensions (8 x 8).
-	// Uncomment the following code line and change
-	// the x and y parameters as needed.
+var G = ( function () {
+	// By convention, constants are all upper-case
 
-	// PS.gridSize( 8, 8 );
+	var WIDTH = 9; // width of grid
+	var HEIGHT = 9; // height of grid
 
-	// This is also a good place to display
-	// your game title or a welcome message
-	// in the status line above the grid.
-	// Uncomment the following code line and
-	// change the string parameter as needed.
+	var COLOR_PLAYER = PS.COLOR_GREEN; // grabber color
+	var COLOR_ENEMY = PS.COLOR_BLACK; // floor color
+	var COLOR_BORDER = PS.COLOR_GRAY; // wall color
 
-	// PS.statusText( "Game" );
+	// The following variables are player-related,
+	// so they start with 'p'
 
-	// Add any other initialization code you need here.
-};
+	var p_x = 1; // current x-pos of grabber
+	var p_y = 4; // current y-pos of grabber
+	
+	// The following variables are enemy-related,
+	// so they start with 'e'
+
+	var e_x = 7; // current x-pos of grabber
+	var e_y = 4; // current y-pos of grabber
+
+	// The 'exports' object is used to define
+	// variables and/or functions that need to be
+	// accessible outside this function.
+	// So far, it contains only one property,
+	// an 'init' function with no parameters.
+
+	var exports = {
+
+		// G.init()
+		// Initializes the game
+
+		init : function () {
+			PS.gridSize( WIDTH, HEIGHT ); // init grid
+			for(let i = 0; i < 9; i++) {
+				PS.color(4, i, PS.COLOR_GRAY);
+			}
+
+
+			// Place player and enemy at initial position
+
+			PS.color( p_x, p_y, COLOR_PLAYER );
+			PS.color( e_x, e_y, COLOR_ENEMY );
+			
+			PS.statusText( "Press Space to throw a dodgeball!" );
+		}
+	};
+
+ // Return the 'exports' object as the value
+ // of this function, thereby assigning it
+ // to the global G variable. This makes
+ // its properties visible to Perlenspiel.
+
+	return exports;
+} () );
+
+// Tell Perlenspiel to use our G.init() function
+// to initialize the game
+
+PS.init = G.init;
+
+
 
 /*
 PS.touch ( x, y, data, options )
@@ -182,6 +223,34 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 
 	// Add code here for when a key is pressed.
+	switch ( key ) {
+		case PS.KEY_ARROW_UP:
+		case 119:
+		case 87: {
+			// Code to move things UP
+			break;
+		}
+		case PS.KEY_ARROW_DOWN:
+		case 115:
+		case 83: {
+			// Code to move things DOWN
+			break;
+		}
+		case PS.KEY_ARROW_LEFT:
+		case 97:
+		case 65: {
+			// Code to move things LEFT
+			break;
+		}
+		case PS.KEY_ARROW_RIGHT:
+		case 100:
+		case 68: {
+			// Code to move things RIGHT
+			G.move(
+			break;
+		}
+	}
+	
 };
 
 /*
