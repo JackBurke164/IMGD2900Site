@@ -99,7 +99,7 @@ let G = ( function () {
 			PS.color( e_x, e_y, COLOR_ENEMY );
 			
 			PS.statusText( "Press Space to throw a dodgeball!" );
-		}
+		},
 		
 		move : function(h,v) {
 			
@@ -132,11 +132,9 @@ let G = ( function () {
 // Tell Perlenspiel to use our G.init() function
 // to initialize the game
 
-PS.init = G.init;
-
-
-
-
+PS.init = function( system, options ) {
+	G.init();
+};
 
 /*
 PS.touch ( x, y, data, options )
