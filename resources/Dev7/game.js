@@ -82,6 +82,44 @@ let G = ( function () {
 	// accessible outside this function.
 	
 	let exports = {
+		
+		moveEnemy : function() {
+			
+			let m = PS.random(4);
+			let v = 0;
+			let h = 0;
+			
+			switch(m) {
+				case 1:
+					v = -1;
+					break;
+				case 2:
+					v = 1;
+					break;
+				case 3:
+					h = -1;
+					break;
+				case 4:
+					h = 1;
+					break;
+			}	
+			
+			let nx = e_x + h;
+			let ny = e_y + v;
+			
+			if(PS.color(nx, ny) == COLOR_BORDER) {
+				return;
+			}
+			
+			if ( ( nx < 0 ) || ( nx >= WIDTH-1 ) || ( ny < 0 ) || ( ny > HEIGHT-1 ) ) {
+				return;
+			}
+			
+			PS.color(e_x, e_y, COLOR_FLOOR);
+			PS.color(nx, ny, COLOR_ENEMY);
+			e_x = nx;
+			e_y = ny;
+		},
 
 		// G.init()
 		// Initializes the game
@@ -99,6 +137,8 @@ let G = ( function () {
 			PS.color( e_x, e_y, COLOR_ENEMY );
 			
 			PS.statusText( "Press Space to throw a dodgeball!" );
+			
+			PS.timerStart( 60, G.moveEnemy() );
 		},
 		
 		move : function(h,v) {
@@ -110,7 +150,7 @@ let G = ( function () {
 				return;
 			}
 			
-			if ( ( nx < 0 ) || ( nx >= WIDTH ) || ( ny < 0 ) || ( ny >= HEIGHT ) ) {
+			if ( ( nx < 0 ) || ( nx >= WIDTH-1 ) || ( ny < 0 ) || ( ny > HEIGHT-1 ) ) {
 				return;
 			}
 			
@@ -119,6 +159,8 @@ let G = ( function () {
 			p_x = nx;
 			p_y = ny;
 		}
+		
+		
 	};
 
  // Return the 'exports' object as the value
