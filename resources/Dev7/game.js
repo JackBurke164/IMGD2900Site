@@ -70,12 +70,16 @@ let G = ( function () {
 
 	let p_x = 1; // current x-pos of player
 	let p_y = 4; // current y-pos of player
+	let pHasBall = false; // does player have ball? 
 	
 	// The following variables are enemy-related,
 	// so they start with 'e'
 
 	let e_x = 7; // current x-pos of enemy
 	let e_y = 4; // current y-pos of enemy
+	let eHasBall = true;
+	
+	
 
 	// The 'exports' object is used to define
 	// variables and/or functions that need to be
@@ -107,18 +111,62 @@ let G = ( function () {
 			let nx = e_x + h;
 			let ny = e_y + v;
 			
-			if(PS.color(nx, ny) == COLOR_BORDER) {
+			if ( ( nx < 0 ) || ( nx >= WIDTH ) || ( ny < 0 ) || ( ny >= HEIGHT ) ) {
 				return;
 			}
 			
-			if ( ( nx < 0 ) || ( nx >= WIDTH-1 ) || ( ny < 0 ) || ( ny > HEIGHT-1 ) ) {
+			if(PS.color(nx, ny) == COLOR_BORDER) {
 				return;
 			}
 			
 			PS.color(e_x, e_y, COLOR_FLOOR);
 			PS.color(nx, ny, COLOR_ENEMY);
+			if(eHasBall) {
+				PS.glyph(e_x, e_y, "");
+				PS.glyph(nx, ny, "o");
+				PS.glyphColor(nx, ny, PS.COLOR_RED);
+			}
+			
 			e_x = nx;
 			e_y = ny;
+			
+		},
+		
+		enemyThrow : function() {
+			if(!eHasBall) {
+				return;
+			}
+			eHasBall = false;
+			let b_y = e_y;
+			let b_x = e_x;
+			
+			let throwTimer = PS.timerStart(10, () => {
+				if(b_x <= 0) {
+					PS.timerStop(throwTimer);
+					pHasBall = true;
+					
+					PS.glyph(0, b_y, "");
+					PS.glyph(p_x, p_y, "o");
+					PS.glyphColor(p_x, p_y, PS.COLOR_RED);
+					return;
+				}
+				
+				PS.glyph(b_x, b_y, "");
+				PS.glyph(b_x-1, b_y, "o");
+				PS.glyphColor(b_x-1, b_y, PS.COLOR_RED);
+				
+				if(PS.color(b_x-1, b_y) == COLOR_PLAYER) {
+					PS.timerStop(throwTimer);
+					PS.timerStop(G.eMoveTimer);
+					PS.timerStop(G.eThrowTimer);
+					G.gameOver = true;
+					PS.statusText("Game Over! You lose!");
+				}
+				
+				b_x--;
+			} );
+			
+			
 		},
 
 		// G.init()
@@ -126,19 +174,24 @@ let G = ( function () {
 
 		init : function () {
 			PS.gridSize( WIDTH, HEIGHT ); // init grid
+
 			for(let i = 0; i < 9; i++) {
 				PS.color(4, i, COLOR_BORDER);
 			}
-
 
 			// Place player and enemy at initial position
 
 			PS.color( p_x, p_y, COLOR_PLAYER );
 			PS.color( e_x, e_y, COLOR_ENEMY );
+			PS.glyph( e_x, e_y, "o");
+			PS.glyphColor( e_x, e_y, PS.COLOR_RED);
+			
+			let gameOver = false;
 			
 			PS.statusText( "Press Space to throw a dodgeball!" );
 			
-			PS.timerStart( 60, G.moveEnemy() );
+			G.eMoveTimer = PS.timerStart( 60, G.moveEnemy );
+			G.eThrowTimer = PS.timerStart( 180, G.enemyThrow );
 		},
 		
 		move : function(h,v) {
@@ -146,18 +199,61 @@ let G = ( function () {
 			let nx = p_x + h;
 			let ny = p_y + v;
 			
-			if(PS.color(nx, ny) == COLOR_BORDER) {
+			if ( ( nx < 0 ) || ( nx >= WIDTH ) || ( ny < 0 ) || ( ny >= HEIGHT ) ) {
 				return;
 			}
 			
-			if ( ( nx < 0 ) || ( nx >= WIDTH-1 ) || ( ny < 0 ) || ( ny > HEIGHT-1 ) ) {
+			if(PS.color(nx, ny) == COLOR_BORDER) {
 				return;
 			}
 			
 			PS.color(p_x, p_y, COLOR_FLOOR);
 			PS.color(nx, ny, COLOR_PLAYER);
+			if(pHasBall) {
+				PS.glyph(p_x, p_y, "");
+				PS.glyph(nx, ny, "o");
+				PS.glyphColor(nx, ny, PS.COLOR_RED);
+			}
+			
 			p_x = nx;
 			p_y = ny;
+		},
+		
+		playerThrow : function() {
+			if(!pHasBall) {
+				return;
+			}
+			pHasBall = false;
+			let b_y = p_y;
+			let b_x = p_x;
+			
+			let throwTimer = PS.timerStart(10, () => {
+				if(b_x >= 8) {
+					PS.timerStop(throwTimer);
+					
+					eHasBall = true;
+					PS.glyph(8, b_y, "");
+					PS.glyph(e_x, e_y, "o");
+					PS.glyphColor(e_x, e_y, PS.COLOR_RED);
+					return;
+				}
+				
+				PS.glyph(b_x, b_y, "");
+				PS.glyph(b_x+1, b_y, "o");
+				PS.glyphColor(b_x+1, b_y, PS.COLOR_RED);
+				
+				if(PS.color(b_x+1, b_y) == COLOR_ENEMY) {
+					PS.timerStop(throwTimer);
+					PS.timerStop(G.eMoveTimer);
+					PS.timerStop(G.eThrowTimer);
+					G.gameOver = true;
+					PS.statusText("Game Over! You win!");
+				}
+				
+				b_x++;
+			} );
+			
+			
 		}
 		
 		
@@ -178,94 +274,7 @@ PS.init = function( system, options ) {
 	G.init();
 };
 
-/*
-PS.touch ( x, y, data, options )
-Called when the left mouse button is clicked over bead(x, y), or when bead(x, y) is touched.
-This function doesn't have to do anything. Any value returned is ignored.
-[x : Number] = zero-based x-position (column) of the bead on the grid.
-[y : Number] = zero-based y-position (row) of the bead on the grid.
-[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
 
-PS.touch = function( x, y, data, options ) {
-	// Uncomment the following code line
-	// to inspect x/y parameters:
-
-	// PS.debug( "PS.touch() @ " + x + ", " + y + "\n" );
-
-	// Add code here for mouse clicks/touches
-	// over a bead.
-};
-
-/*
-PS.release ( x, y, data, options )
-Called when the left mouse button is released, or when a touch is lifted, over bead(x, y).
-This function doesn't have to do anything. Any value returned is ignored.
-[x : Number] = zero-based x-position (column) of the bead on the grid.
-[y : Number] = zero-based y-position (row) of the bead on the grid.
-[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
-
-PS.release = function( x, y, data, options ) {
-	// Uncomment the following code line to inspect x/y parameters:
-
-	// PS.debug( "PS.release() @ " + x + ", " + y + "\n" );
-
-	// Add code here for when the mouse button/touch is released over a bead.
-};
-
-/*
-PS.enter ( x, y, button, data, options )
-Called when the mouse cursor/touch enters bead(x, y).
-This function doesn't have to do anything. Any value returned is ignored.
-[x : Number] = zero-based x-position (column) of the bead on the grid.
-[y : Number] = zero-based y-position (row) of the bead on the grid.
-[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
-
-PS.enter = function( x, y, data, options ) {
-	// Uncomment the following code line to inspect x/y parameters:
-
-	// PS.debug( "PS.enter() @ " + x + ", " + y + "\n" );
-
-	// Add code here for when the mouse cursor/touch enters a bead.
-};
-
-/*
-PS.exit ( x, y, data, options )
-Called when the mouse cursor/touch exits bead(x, y).
-This function doesn't have to do anything. Any value returned is ignored.
-[x : Number] = zero-based x-position (column) of the bead on the grid.
-[y : Number] = zero-based y-position (row) of the bead on the grid.
-[data : *] = The JavaScript value previously associated with bead(x, y) using PS.data(); default = 0.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
-
-PS.exit = function( x, y, data, options ) {
-	// Uncomment the following code line to inspect x/y parameters:
-
-	// PS.debug( "PS.exit() @ " + x + ", " + y + "\n" );
-
-	// Add code here for when the mouse cursor/touch exits a bead.
-};
-
-/*
-PS.exitGrid ( options )
-Called when the mouse cursor/touch exits the grid perimeter.
-This function doesn't have to do anything. Any value returned is ignored.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
-
-PS.exitGrid = function( options ) {
-	// Uncomment the following code line to verify operation:
-
-	// PS.debug( "PS.exitGrid() called\n" );
-
-	// Add code here for when the mouse cursor/touch moves off the grid.
-};
 
 /*
 PS.keyDown ( key, shift, ctrl, options )
@@ -283,6 +292,11 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 	// PS.debug( "PS.keyDown(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
 
 	// Add code here for when a key is pressed.
+	
+	if(G.gameOver) {
+		return;
+	}
+	
 	switch ( key ) {
 		case PS.KEY_ARROW_UP:
 		case 119:
@@ -312,46 +326,12 @@ PS.keyDown = function( key, shift, ctrl, options ) {
 			G.move(1,0);
 			break;
 		}
+		case PS.KEY_SPACE: {
+			G.playerThrow();
+			break;
+		}
 	}
 	
 };
 
-/*
-PS.keyUp ( key, shift, ctrl, options )
-Called when a key on the keyboard is released.
-This function doesn't have to do anything. Any value returned is ignored.
-[key : Number] = ASCII code of the released key, or one of the PS.KEY_* constants documented in the API.
-[shift : Boolean] = true if shift key is held down, else false.
-[ctrl : Boolean] = true if control key is held down, else false.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-*/
-
-PS.keyUp = function( key, shift, ctrl, options ) {
-	// Uncomment the following code line to inspect first three parameters:
-
-	// PS.debug( "PS.keyUp(): key=" + key + ", shift=" + shift + ", ctrl=" + ctrl + "\n" );
-
-	// Add code here for when a key is released.
-};
-
-/*
-PS.input ( sensors, options )
-Called when a supported input device event (other than those above) is detected.
-This function doesn't have to do anything. Any value returned is ignored.
-[sensors : Object] = A JavaScript object with properties indicating sensor status; see API documentation for details.
-[options : Object] = A JavaScript object with optional data properties; see API documentation for details.
-NOTE: Currently, only mouse wheel events are reported, and only when the mouse cursor is positioned directly over the grid.
-*/
-
-PS.input = function( sensors, options ) {
-	// Uncomment the following code lines to inspect first parameter:
-
-//	 var device = sensors.wheel; // check for scroll wheel
-//
-//	 if ( device ) {
-//	   PS.debug( "PS.input(): " + device + "\n" );
-//	 }
-
-	// Add code here for when an input event is detected.
-};
 
