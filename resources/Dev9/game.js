@@ -62,8 +62,9 @@ let G = ( function () {
 
 	let COLOR_PLAYER = PS.COLOR_GREEN; // player color
 	let COLOR_ENEMY = PS.COLOR_BLACK; // enemy color
-	let COLOR_BORDER = PS.COLOR_GRAY; // border color
-	let COLOR_FLOOR = PS.COLOR_WHITE; // floor color
+	let COLOR_BORDER = 0x930000; // border color
+	let COLOR_FLOOR = 0xEEDF9F; // floor color
+
 
 	// The following variables are player-related,
 	// so they start with 'p'
@@ -94,6 +95,8 @@ let G = ( function () {
 	// The 'exports' object is used to define
 	// variables and/or functions that need to be
 	// accessible outside this function.
+	
+	let sfx_id;
 	
 	let exports = {
 		
@@ -197,6 +200,7 @@ let G = ( function () {
 				if(b_x <= 0) {
 					PS.timerStop(throwTimer);
 					pCanPickUp = true;
+					PS.audioPlayChannel(sfx_id);
 					
 					return;
 				}
@@ -209,6 +213,7 @@ let G = ( function () {
 					
 					eScore++;
 					PS.statusText("Score: Player " + pScore + "/3, Enemy " + eScore + "/3");
+					PS.audioPlayChannel(sfx_id);
 					
 					if(eScore >= 3) {
 						PS.timerStop(throwTimer);
@@ -231,10 +236,25 @@ let G = ( function () {
 		init : function () {
 			PS.gridSize( WIDTH, HEIGHT ); // init grid
 
+			var loader = function ( data ) {
+				sfx_id = data.channel;
+			};
+			
+			PS.audioLoad("BallSFX", { 
+				lock : true,
+				onLoad : loader,
+				path : "./",
+				fileTypes : ['mp3']
+			} );
+			
+
+			PS.color(PS.ALL, PS.ALL, COLOR_FLOOR);
+			
+			
 			for(let i = 0; i < 9; i++) {
 				PS.color(4, i, COLOR_BORDER);
 			}
-
+	
 			// Place player and enemy at initial position
 
 			PS.color( p_x, p_y, COLOR_PLAYER );
@@ -293,6 +313,7 @@ let G = ( function () {
 					PS.timerStop(throwTimer);
 					
 					eCanPickUp = true;
+					PS.audioPlayChannel(sfx_id);
 					
 					return;
 				}
@@ -304,6 +325,7 @@ let G = ( function () {
 				if(PS.color(b_x+1, b_y) == COLOR_ENEMY) {
 					pScore++;
 					PS.statusText("Score: Player " + pScore + "/3, Enemy " + eScore + "/3");
+					PS.audioPlayChannel(sfx_id);
 					
 					if(pScore >= 3) {
 						PS.timerStop(throwTimer);
