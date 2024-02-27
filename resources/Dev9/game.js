@@ -71,6 +71,7 @@ let G = ( function () {
 	let p_x = 1; // current x-pos of player
 	let p_y = 4; // current y-pos of player
 	let pHasBall = false; // does player have ball? 
+	let pScore = 0;
 	
 	// The following variables are enemy-related,
 	// so they start with 'e'
@@ -78,6 +79,15 @@ let G = ( function () {
 	let e_x = 7; // current x-pos of enemy
 	let e_y = 4; // current y-pos of enemy
 	let eHasBall = true;
+	let eScore = 0;
+	
+	// The following variables are ball-related,
+	// so they start with 'b'
+	
+	let b_x = e_x;
+	let b_y = e_y;
+	let eCanPickUp = false;
+	let pCanPickUp = false;
 	
 	
 
@@ -89,24 +99,61 @@ let G = ( function () {
 		
 		moveEnemy : function() {
 			
-			let m = PS.random(4);
 			let v = 0;
 			let h = 0;
 			
-			switch(m) {
-				case 1:
-					v = -1;
-					break;
-				case 2:
+			if(eHasBall) {
+				if(p_y > e_y) {
 					v = 1;
-					break;
-				case 3:
+				}
+				else if(p_y < e_y) {
+					v = -1;
+				}
+				else {
 					h = -1;
-					break;
-				case 4:
+				}
+				
+			}
+			else if (pHasBall){
+				if(p_y > e_y) {
+					v = -1;
+				}
+				else if(p_y < e_y) {
+					v = 1;
+				}
+				else {
 					h = 1;
-					break;
-			}	
+				}
+			}
+			else if(eCanPickUp) {
+				if(e_x < b_x) {
+					h = 1;
+				}
+				else if(e_y < b_y) {
+					v = 1;
+				}
+				else if(e_y > b_y) {
+					v = -1;
+				}
+			}
+			else {
+				let m = PS.random(4);
+			
+				switch(m) {
+					case 1:
+						v = -1;
+						break;
+					case 2:
+						v = 1;
+						break;
+					case 3:
+						h = -1;
+						break;
+					case 4:
+						h = 1;
+						break;
+				}	
+			}
 			
 			let nx = e_x + h;
 			let ny = e_y + v;
@@ -125,10 +172,17 @@ let G = ( function () {
 				PS.glyph(e_x, e_y, "");
 				PS.glyph(nx, ny, "o");
 				PS.glyphColor(nx, ny, PS.COLOR_RED);
+				b_x = nx;
+				b_y = ny;
 			}
 			
 			e_x = nx;
 			e_y = ny;
+			
+			if(e_x == b_x && e_y == b_y && eCanPickUp) {
+				eHasBall = true;
+				eCanPickUp = false;
+			}
 			
 		},
 		
@@ -137,17 +191,13 @@ let G = ( function () {
 				return;
 			}
 			eHasBall = false;
-			let b_y = e_y;
-			let b_x = e_x;
+			
 			
 			let throwTimer = PS.timerStart(10, () => {
 				if(b_x <= 0) {
 					PS.timerStop(throwTimer);
-					pHasBall = true;
+					pCanPickUp = true;
 					
-					PS.glyph(0, b_y, "");
-					PS.glyph(p_x, p_y, "o");
-					PS.glyphColor(p_x, p_y, PS.COLOR_RED);
 					return;
 				}
 				
@@ -156,11 +206,17 @@ let G = ( function () {
 				PS.glyphColor(b_x-1, b_y, PS.COLOR_RED);
 				
 				if(PS.color(b_x-1, b_y) == COLOR_PLAYER) {
-					PS.timerStop(throwTimer);
-					PS.timerStop(G.eMoveTimer);
-					PS.timerStop(G.eThrowTimer);
-					G.gameOver = true;
-					PS.statusText("Game Over! You lose!");
+					
+					eScore++;
+					PS.statusText("Score: Player " + pScore + "/3, Enemy " + eScore + "/3");
+					
+					if(eScore >= 3) {
+						PS.timerStop(throwTimer);
+						PS.timerStop(G.eMoveTimer);
+						PS.timerStop(G.eThrowTimer);
+						G.gameOver = true;
+						PS.statusText("Game Over! You lose!");
+					}
 				}
 				
 				b_x--;
@@ -213,10 +269,17 @@ let G = ( function () {
 				PS.glyph(p_x, p_y, "");
 				PS.glyph(nx, ny, "o");
 				PS.glyphColor(nx, ny, PS.COLOR_RED);
+				b_x = nx;
+				b_y = ny;
 			}
 			
 			p_x = nx;
 			p_y = ny;
+			
+			if(p_x == b_x && p_y == b_y && pCanPickUp) {
+				pHasBall = true;
+				pCanPickUp = false;
+			}
 		},
 		
 		playerThrow : function() {
@@ -224,17 +287,13 @@ let G = ( function () {
 				return;
 			}
 			pHasBall = false;
-			let b_y = p_y;
-			let b_x = p_x;
 			
 			let throwTimer = PS.timerStart(10, () => {
 				if(b_x >= 8) {
 					PS.timerStop(throwTimer);
 					
-					eHasBall = true;
-					PS.glyph(8, b_y, "");
-					PS.glyph(e_x, e_y, "o");
-					PS.glyphColor(e_x, e_y, PS.COLOR_RED);
+					eCanPickUp = true;
+					
 					return;
 				}
 				
@@ -243,11 +302,16 @@ let G = ( function () {
 				PS.glyphColor(b_x+1, b_y, PS.COLOR_RED);
 				
 				if(PS.color(b_x+1, b_y) == COLOR_ENEMY) {
-					PS.timerStop(throwTimer);
-					PS.timerStop(G.eMoveTimer);
-					PS.timerStop(G.eThrowTimer);
-					G.gameOver = true;
-					PS.statusText("Game Over! You win!");
+					pScore++;
+					PS.statusText("Score: Player " + pScore + "/3, Enemy " + eScore + "/3");
+					
+					if(pScore >= 3) {
+						PS.timerStop(throwTimer);
+						PS.timerStop(G.eMoveTimer);
+						PS.timerStop(G.eThrowTimer);
+						G.gameOver = true;
+						PS.statusText("Game Over! You win!");
+					}
 				}
 				
 				b_x++;
